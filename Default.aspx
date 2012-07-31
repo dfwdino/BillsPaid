@@ -10,9 +10,17 @@
     <form id="form1" runat="server">
     <div>
     
+        <asp:Label ID="lblShowDates" runat="server"></asp:Label>
         <br />
+        <br />  
+       
+            <div runat="server" id="mydiv">
+                blah<br />
+                blah<br />
+            </div>
+        <br />  
+        <a href="Add.aspx">Add New Bill</a> <a href="Default.aspx?View=All">View All</a></asp:PlaceHolder>
         <br />
-        <a href="Add.aspx">Add New Bill</a> <a href="Default.aspx?View=All">View All</a><br />
     
     </div>
     </form>
