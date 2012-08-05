@@ -7,10 +7,15 @@ using System.Web;
 using System.Web.UI;
 using System.Web.UI.WebControls;
 
+
+
 public partial class edit : System.Web.UI.Page
 {
     string ID;
     DBStuff myDB;
+    
+    
+    
     protected void Page_Load(object sender, EventArgs e)
     {
         ID = Request.QueryString["PaidID"];
@@ -44,21 +49,37 @@ public partial class edit : System.Web.UI.Page
     }
     protected void btnSave_Click(object sender, EventArgs e)
     {
+        calDueDate.SelectedDate = DateTime.Now.Date;
+        
         myDB.UpdateBill(ID, txtCompany.Text, txtDueDate.Text, txtAmount.Text);
 
         lblUpdated.Text = "Company was updated.";
         btnCancel.Text = "View List";
+        
 
     }
 
     protected void lbtnCalendar_Click(object sender, EventArgs e)
     {
-        calDueDate.Visible = true;
+
+        if (calDueDate.Visible == true)
+            calDueDate.Visible = false;
+        else
+            calDueDate.Visible = true;
+
+        calDueDate.SelectedDate = DateTime.Now;
+        calDueDate.SelectionMode = CalendarSelectionMode.Day;
+        calDueDate.TodaysDate = DateTime.Now;
+        
+         
     }
     protected void calDueDate_SelectionChanged(object sender, EventArgs e)
     {
+       
         txtDueDate.Text = calDueDate.SelectedDate.ToShortDateString();
+        calDueDate.SelectedDate = DateTime.Now;
         calDueDate.Visible = false;
+        
     }
 
 }

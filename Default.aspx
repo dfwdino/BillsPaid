@@ -15,12 +15,11 @@
         <br />  
        
             <div runat="server" id="mydiv">
-                blah<br />
-                blah<br />
+                Space Fill...<br />
+                You really should not be saying this.<br />
             </div>
         <br />  
-        <a href="Add.aspx">Add New Bill</a> <a href="Default.aspx?View=All">View All</a></asp:PlaceHolder>
-        <br />
+        <a href="Add.aspx">Add New Bill</a> <div id="pView" runat="server">View me naked</div>
     
     </div>
     </form>

@@ -9,8 +9,11 @@ using System.Web.UI.WebControls;
 
 public partial class Add : System.Web.UI.Page
 {
+    
+
     protected void Page_Load(object sender, EventArgs e)
     {
+
 
     }
     protected void btnAddBill_Click(object sender, EventArgs e)
@@ -44,7 +47,21 @@ public partial class Add : System.Web.UI.Page
     }
     protected void lbtnCalendar_Click(object sender, EventArgs e)
     {
-        calDueDate.Visible = true;
+        if (calDueDate.Visible == true)
+            calDueDate.Visible = false;
+        else
+        {
+            calDueDate.Visible = true;
+            calDueDate.SelectedDate = DateTime.Now;
+            calDueDate.BorderStyle = BorderStyle.Groove;
+            calDueDate.DayNameFormat = DayNameFormat.FirstTwoLetters;
+            calDueDate.SelectionMode = CalendarSelectionMode.Day;
+            calDueDate.ShowGridLines = true;
+            calDueDate.VisibleDate = DateTime.Now;
+            
+        }
+
+       
     }
     protected void calDueDate_SelectionChanged(object sender, EventArgs e)
     {

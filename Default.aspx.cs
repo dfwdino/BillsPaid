@@ -9,122 +9,11 @@ using System.Web.UI;
 using System.Web.UI.WebControls;
 
 
-public class DBStuff : IDisposable
-{
-    SqlConnection myConnection;
-    SqlDataAdapter myCommand = null;
-    string Paid = string.Empty;
-    string DatePaid = string.Empty;
-
-
-    public DBStuff()
-    {
-        myConnection = new SqlConnection(@"server=MASOCHIST\MASOCHISTSQL;database=Bills;User Id=Bills;Password=Bills");
-    }
-
-    public DataSet GetAllBills()
-    {
-        myCommand = new SqlDataAdapter("SELECT * FROM Bills", myConnection);
-
-        DataSet ds = new DataSet();
-
-        myCommand.Fill(ds);
-
-        return ds;
-
-    }
-
-    public void UpDatePaid(string BillID, string Paid, string DatePaid)
-    {
-        string UpdatePaid = "update [Bills].[dbo].[Bills] " +
-                                     "set Paid = '" + Paid + "', DatePaid = '" + DatePaid + "'" +
-                                     " where IndexNumber = '" + BillID + "'";
-
-
-        // Connect to the SQL database using a SQL SELECT query to get 
-        // all the data from the "Titles" table.
-        SqlCommand mySQLCommand = new SqlCommand(UpdatePaid, myConnection);
-        myConnection.Open();
-
-        mySQLCommand.ExecuteNonQuery();
-
-        mySQLCommand.Dispose();
-    }
-
-    public DataSet GetBillsDataRange(DateTime DateStart, DateTime DateEnd)
-    {
-        myCommand = new SqlDataAdapter("SELECT * FROM Bills where DueDate > '" + DateTime.Now.Date + "' AND DueDate < '" + DateTime.Now.Date.AddDays(30) + "'", myConnection);
-
-        DataSet ds = new DataSet();
-
-        myCommand.Fill(ds);
-
-        return ds;
-
-    }
-
-    public void AddBill(string Company, string DueDate, string Amount)
-    {
-
-        string insertbill = "INSERT INTO [Bills].[dbo].[Bills] ([Company],[DueDate],[Amount])" +
-                    " VALUES ('" + Company + "','" + DueDate + "'," + Amount + ")";
-
-
-        // Connect to the SQL database using a SQL SELECT query to get 
-        // all the data from the "Titles" table.
-        SqlCommand myCommand = new SqlCommand(insertbill, myConnection);
-        myConnection.Open();
-
-        myCommand.ExecuteNonQuery();
-
-    }
-
-    public void UpdateBill(string BillID, string Company, string DueDate, string Amount)
-    {
-
-        string UpdatePaid = "update [Bills].[dbo].[Bills] " +
-                                   "set company = '" + Company + "', DueDate = '" + DueDate + "'" + ", Amount = '" + Amount + "'" +
-                                   " where IndexNumber = '" + BillID + "'";
-
-
-        // Connect to the SQL database using a SQL SELECT query to get 
-        // all the data from the "Titles" table.
-        SqlCommand mySQLCommand = new SqlCommand(UpdatePaid, myConnection);
-        myConnection.Open();
-
-        mySQLCommand.ExecuteNonQuery();
-
-        mySQLCommand.Dispose();
-
-    }
-
-    public DataSet GetBill(string BillID)
-    {
-        myCommand = new SqlDataAdapter("SELECT * FROM Bills where IndexNumber = '" + BillID + "'", myConnection);
-
-        DataSet ds = new DataSet();
-
-        myCommand.Fill(ds);
-
-        return ds;
-
-    }
-
-    public void Dispose()
-    {
-        myCommand.Dispose();
-
-        myConnection.Close();
-        myConnection.Dispose();
-    }
-
-}
-
-
 public partial class _Default : System.Web.UI.Page
 {
     protected void Page_Load(object sender, EventArgs e)
     {
+        
         DBStuff myDB = new DBStuff();
         DataSet ds = null;
         
@@ -138,16 +27,28 @@ public partial class _Default : System.Web.UI.Page
                 {
                     lblShowDates.Text = "Showing all bills.";
                     ds = myDB.GetAllBills();
+                    pView.InnerHtml = "<a href=Default.aspx>View Only 30 days</a>";
                 }
 
             }
-            //else
-            //{
-            //    lblShowDates.Text = "Bills from " + DateTime.Now.Date.ToString().Split(' ')[0] + " and " + DateTime.Now.Date.AddDays(30).ToString().Split(' ')[0];
-            //    myCommand = new SqlDataAdapter("SELECT * FROM Bills where DueDate > '" + DateTime.Now.Date + "' AND DueDate < '" + DateTime.Now.Date.AddDays(30) + "'", myConnection);
 
-            //}
+            if (Request.QueryString.AllKeys.Contains("Call"))
+            {
+                string CallFunction = Request.QueryString["Call"].ToString();
 
+                if(CallFunction.Equals("Delete"))
+                    myDB.DeleteBill(ID);
+
+                lblShowDates.Text = "Bills from " + DateTime.Now.Date.ToString().Split(' ')[0] + " and " + DateTime.Now.Date.AddDays(30).ToString().Split(' ')[0];
+
+                ds = myDB.GetBillsDataRange(DateTime.Now.Date, DateTime.Now.Date.AddDays(30));
+                pView.InnerHtml = "<a href=Default.aspx?View=All>View All</a>";
+
+
+            }
+                
+
+            
             if (Request.QueryString.AllKeys.Contains("Paid"))
             {
                 string Paid = string.Empty;
@@ -164,6 +65,7 @@ public partial class _Default : System.Web.UI.Page
                 myDB.UpDatePaid(ID, Paid, DatePaid);
                 lblShowDates.Text = "Bills from " + DateTime.Now.Date.ToString().Split(' ')[0] + " and " + DateTime.Now.Date.AddDays(30).ToString().Split(' ')[0];
                 ds = myDB.GetBillsDataRange(DateTime.Now.Date, DateTime.Now.Date.AddDays(30));
+                pView.InnerHtml = "<a href=Default.aspx?View=All>View All</a>";
             }
             
 
@@ -173,39 +75,48 @@ public partial class _Default : System.Web.UI.Page
             lblShowDates.Text = "Bills from " + DateTime.Now.Date.ToString().Split(' ')[0] + " and " + DateTime.Now.Date.AddDays(30).ToString().Split(' ')[0];
             
             ds = myDB.GetBillsDataRange(DateTime.Now.Date, DateTime.Now.Date.AddDays(30));
-            
+            pView.InnerHtml = "<a href=Default.aspx?View=All>View All</a>";
 
         }
-
-        
-        
+              
         
         if(!(ds == null))
         {
             StringBuilder BillsHTML = new StringBuilder();
+            double TotalOfBills = 0;
 
-            
-
+            BillsHTML.Append("<table border=1>");
             foreach (DataRow dr in ds.Tables[0].Rows)
             {
+                BillsHTML.Append("<tr>");
                 if (dr["Paid"].ToString().ToLower().Equals("yes"))
                     BillsHTML.Append("<del>");
-                BillsHTML.Append(dr["Company"] + " - ");
-                BillsHTML.Append("$" + dr["Amount"] + " - ");
-                BillsHTML.Append(dr["DueDate"].ToString().Split(' ')[0] + " - ");
+                BillsHTML.Append("<td>" + dr["Company"] + "</td>");
+                if (dr["Paid"].ToString().ToLower().Equals("yes"))
+                    BillsHTML.Append("</del>");
+                BillsHTML.Append("<td>" + "$" + dr["Amount"] + "</td> ");
+                TotalOfBills += (double)dr["Amount"];
+                BillsHTML.Append("<td>" + dr["DueDate"].ToString().Split(' ')[0] + "</td>");
                 if (dr["Paid"].ToString().ToLower().Equals("yes"))
                 {
-                    BillsHTML.Append("<a href=default.aspx?PaidID=" + dr["IndexNumber"] + "&Paid=" + dr["Paid"] + ">Paid on " + dr["DatePaid"].ToString().Split(' ')[0] + "</a>");
-                    BillsHTML.Append("</del>");
+                    BillsHTML.Append("<td><a href=default.aspx?PaidID=" + dr["IndexNumber"] + "&Paid=" + dr["Paid"] + ">Paid on " + dr["DatePaid"].ToString().Split(' ')[0] + "</a></td>");
+                    
                 }
                 else
-                    BillsHTML.Append("<a href=default.aspx?PaidID=" + dr["IndexNumber"] + "&Paid=" + dr["Paid"] + ">Not Paid</a>");
+                    BillsHTML.Append("<td><a href=default.aspx?PaidID=" + dr["IndexNumber"] + "&Paid=" + dr["Paid"] + ">Not Paid</a></td>");
 
-                BillsHTML.Append("  <a href=edit.aspx?PaidID=" + dr["IndexNumber"] + ">Edit</a>");
+                BillsHTML.Append("<td>  <a href=edit.aspx?PaidID=" + dr["IndexNumber"] + ">Edit</a></td>");
 
-                BillsHTML.Append("<br/>");
+                BillsHTML.Append("<td>  <a href=default.aspx?PaidID=" + dr["IndexNumber"] + "&Call=Delete>Delete</a></td>");
+                BillsHTML.Append("</tr>");
+                
             }
-
+            BillsHTML.Append("</table>");
+            
+            BillsHTML.Append("<br/>");
+            
+            BillsHTML.Append("<b>Total Due: </b>    $" + TotalOfBills);
+            
             mydiv.InnerHtml = BillsHTML.ToString();
       }
       
